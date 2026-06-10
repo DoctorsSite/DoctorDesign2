@@ -250,12 +250,12 @@ export function SectionAnalysis() {
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
   const line1 = useTransform(scrollYProgress, [0.3, 0.45], [0, 1]);
   const line2 = useTransform(scrollYProgress, [0.55, 0.7], [0, 1]);
-  const canvasOpacity = useTransform(scrollYProgress, [0.1, 0.28, 0.78, 1], [0, 1, 1, 0.3]);
+  const canvasOpacity = useTransform(scrollYProgress, [0.1, 0.28, 0.8, 1], [0, 1, 1, 0.2]);
 
   return (
     <section ref={ref} className="relative h-[240vh]">
-      <div className="sticky top-0 h-screen overflow-hidden flex flex-col items-center justify-center">
-        {/* 3D diamond — sits behind all text via z-0 */}
+      <div className="sticky top-0 h-screen overflow-hidden">
+        {/* 3D glass diamond fills the screen — diamond object is offset right inside the canvas */}
         <motion.div
           style={{ opacity: canvasOpacity }}
           className="absolute inset-0 z-0 pointer-events-none"
@@ -265,19 +265,18 @@ export function SectionAnalysis() {
           </Suspense>
         </motion.div>
 
-        {/* Text panel — z-10 ensures it is always in front of the canvas.
-            The frosted backdrop makes both lines readable over bright 3D edges. */}
-        <div className="relative z-10 text-center px-10 py-8 max-w-3xl rounded-3xl bg-background/45 backdrop-blur-md">
-          <p className="text-xs uppercase tracking-[0.4em] text-muted-foreground mb-6">03 — Analysis</p>
+        {/* Text sits in the left half — no overlap with the diamond which lives on the right */}
+        <div className="relative z-10 h-full flex flex-col justify-center px-8 md:px-16 max-w-[48%] min-w-[320px]">
+          <p className="text-xs uppercase tracking-[0.4em] text-muted-foreground mb-8">03 — Analysis</p>
           <motion.h2
-            style={{ opacity: line1, y: useTransform(line1, [0, 1], [30, 0]) }}
-            className="font-display text-[clamp(2rem,5vw,4.5rem)] text-gradient"
+            style={{ opacity: line1, y: useTransform(line1, [0, 1], [32, 0]) }}
+            className="font-display text-[clamp(2rem,4vw,4rem)] leading-[1.05] text-gradient"
           >
             Medicine is not guessing.
           </motion.h2>
           <motion.h2
-            style={{ opacity: line2, y: useTransform(line2, [0, 1], [30, 0]) }}
-            className="mt-6 font-display text-[clamp(2rem,5vw,4.5rem)] text-aurora italic"
+            style={{ opacity: line2, y: useTransform(line2, [0, 1], [32, 0]) }}
+            className="mt-5 font-display text-[clamp(2rem,4vw,4rem)] leading-[1.05] text-aurora italic"
           >
             It is understanding patterns.
           </motion.h2>

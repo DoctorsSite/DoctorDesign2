@@ -1,97 +1,72 @@
 import { Canvas, useFrame } from "@react-three/fiber";
-import { useRef, Suspense, useMemo } from "react";
-import * as THREE from "three";
+import { Float, MeshTransmissionMaterial, Environment, Sparkles } from "@react-three/drei";
+import { useRef, Suspense } from "react";
+import type { Mesh } from "three";
 
-// One octahedral shell as clean edge lines — the building block of the diamond
-function OctahedralShell({
-  radius,
-  opacity,
-  rotSpeed,
-  initRot = [0, 0, 0],
+// Main glass diamond — octahedron detail=1 gives 32 clearly-faceted triangular faces,
+// reads as a precision gemstone. MeshTransmissionMaterial adds real volumetric refraction.
+function GlassDiamond() {
+  const ref = useRef<Mesh>(null);
+  useFrame((state, dt) => {
+    if (!ref.current) return;
+    ref.current.rotation.y += dt * 0.13;
+    ref.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.28) * 0.2;
+  });
+  return (
+    <Float speed={0.8} rotationIntensity={0.3} floatIntensity={0.7}>
+      <mesh ref={ref} position={[1.5, 0, 0]} scale={1.9}>
+        <octahedronGeometry args={[1, 1]} />
+        <MeshTransmissionMaterial
+          thickness={1.4}
+          roughness={0}
+          transmission={1}
+          ior={2.3}
+          chromaticAberration={0.14}
+          samples={6}
+          resolution={256}
+          color="#5ab8e8"
+          attenuationColor="#a8e6ff"
+          attenuationDistance={0.65}
+        />
+      </mesh>
+    </Float>
+  );
+}
+
+// Small accent gems — same material, much smaller, float freely around the main diamond
+function AccentGem({
+  position,
+  scale,
+  speed,
 }: {
-  radius: number;
-  opacity: number;
-  rotSpeed: [number, number, number];
-  initRot?: [number, number, number];
+  position: [number, number, number];
+  scale: number;
+  speed: number;
 }) {
-  const ref = useRef<THREE.LineSegments>(null);
-  const geo = useMemo(
-    () => new THREE.EdgesGeometry(new THREE.OctahedronGeometry(radius, 0)),
-    [radius],
-  );
-
+  const ref = useRef<Mesh>(null);
   useFrame((_, dt) => {
     if (!ref.current) return;
-    ref.current.rotation.x += dt * rotSpeed[0];
-    ref.current.rotation.y += dt * rotSpeed[1];
-    ref.current.rotation.z += dt * rotSpeed[2];
-  });
-
-  return (
-    <lineSegments ref={ref} rotation={new THREE.Euler(...initRot)} geometry={geo}>
-      <lineBasicMaterial color="#7fd4ff" transparent opacity={opacity} />
-    </lineSegments>
-  );
-}
-
-// Pulsing core — a soft glowing sphere at the centre of the diamond
-function GlowCore() {
-  const ref = useRef<THREE.Mesh>(null);
-  useFrame((state) => {
-    if (!ref.current) return;
-    const mat = ref.current.material as THREE.MeshStandardMaterial;
-    mat.emissiveIntensity = 0.45 + Math.sin(state.clock.elapsedTime * 2.2) * 0.2;
+    ref.current.rotation.y += dt * speed;
+    ref.current.rotation.x += dt * speed * 0.6;
   });
   return (
-    <mesh ref={ref}>
-      <sphereGeometry args={[0.28, 16, 16]} />
-      <meshStandardMaterial
-        color="#a8e6ff"
-        emissive="#7fd4ff"
-        emissiveIntensity={0.5}
-        transparent
-        opacity={0.65}
-      />
-    </mesh>
-  );
-}
-
-// Small floating node spheres orbiting the diamond — neural network accent
-function NeuralNodes() {
-  const groupRef = useRef<THREE.Group>(null);
-
-  // Fixed positions (seeded manually so they never re-randomize)
-  const positions = useMemo<[number, number, number][]>(
-    () => [
-      [3.2, 1.1, 0.4],   [-3.0, 0.8, -0.6],  [0.5, 3.3, -0.8],
-      [0.3, -3.1, 0.9],  [2.5, -1.8, 1.2],   [-2.4, -1.6, -1.0],
-      [1.8, 2.4, -1.5],  [-1.6, 2.2, 1.8],   [3.4, -0.5, -1.2],
-      [-3.2, 0.2, 1.4],  [0.8, -2.8, -2.0],  [-0.6, 3.6, 0.5],
-      [2.8, 1.5, -2.0],  [-2.6, -1.2, 2.2],  [1.2, -3.4, -0.4],
-      [-1.0, 1.8, 3.2],
-    ],
-    [],
-  );
-
-  useFrame((_, dt) => {
-    if (!groupRef.current) return;
-    groupRef.current.rotation.y -= dt * 0.06;
-    groupRef.current.rotation.x += dt * 0.02;
-  });
-
-  return (
-    <group ref={groupRef}>
-      {positions.map((pos, i) => (
-        <mesh key={i} position={pos}>
-          <sphereGeometry args={[0.04, 8, 8]} />
-          <meshStandardMaterial
-            color="#cdeaff"
-            emissive="#cdeaff"
-            emissiveIntensity={0.9}
-          />
-        </mesh>
-      ))}
-    </group>
+    <Float speed={1.2} rotationIntensity={0.9} floatIntensity={1.4}>
+      <mesh ref={ref} position={position} scale={scale}>
+        <octahedronGeometry args={[1, 0]} />
+        <MeshTransmissionMaterial
+          thickness={0.5}
+          roughness={0}
+          transmission={1}
+          ior={1.9}
+          chromaticAberration={0.07}
+          samples={3}
+          resolution={64}
+          color="#7fd4ff"
+          attenuationColor="#c4eaff"
+          attenuationDistance={0.5}
+        />
+      </mesh>
+    </Float>
   );
 }
 
@@ -99,38 +74,32 @@ export function AnalysisScene() {
   return (
     <Canvas
       dpr={[1, 1.5]}
-      camera={{ position: [0, 0, 7.5], fov: 46 }}
+      camera={{ position: [0, 0, 7.5], fov: 44 }}
       gl={{ antialias: true, alpha: true }}
       style={{ background: "transparent" }}
     >
       <Suspense fallback={null}>
-        <ambientLight intensity={0.12} />
-        <pointLight position={[5, 4, 5]}  intensity={3.5} color="#a8e6ff" />
-        <pointLight position={[-5, -3, 3]} intensity={2.5} color="#7fd4ff" />
-        <pointLight position={[0, 0, 4]}  intensity={1.0} color="#ffffff" />
+        <ambientLight intensity={0.25} />
+        <directionalLight position={[6, 5, 5]}  intensity={1.8} color="#a8e6ff" />
+        <directionalLight position={[-6, -4, 2]} intensity={1.0} color="#7fd4ff" />
+        <pointLight       position={[3, 2, 4]}   intensity={2.5} color="#ffffff" />
 
-        {/* Three concentric octahedral shells at different radii, speeds, and orientations.
-            Each shell is 12 crisp edges — layering them gives unambiguous 3D diamond depth. */}
-        <OctahedralShell
-          radius={2.3}
-          opacity={0.92}
-          rotSpeed={[0.045, 0.18, 0.02]}
-        />
-        <OctahedralShell
-          radius={1.55}
-          opacity={0.55}
-          rotSpeed={[-0.06, 0.11, 0.04]}
-          initRot={[0.5, 0.3, 0]}
-        />
-        <OctahedralShell
-          radius={0.9}
-          opacity={0.32}
-          rotSpeed={[0.08, -0.09, 0.06]}
-          initRot={[1.0, 0.8, 0.3]}
+        <GlassDiamond />
+        <AccentGem position={[-2.5, 2.0, -0.8]} scale={0.48} speed={0.35} />
+        <AccentGem position={[ 4.2, -1.6, -0.5]} scale={0.32} speed={0.50} />
+        <AccentGem position={[-1.8, -2.4, 0.6]}  scale={0.26} speed={0.42} />
+
+        {/* Subtle sparkle field gives depth without clutter */}
+        <Sparkles
+          count={55}
+          scale={9}
+          size={0.9}
+          speed={0.25}
+          color="#7fd4ff"
+          opacity={0.45}
         />
 
-        <GlowCore />
-        <NeuralNodes />
+        <Environment preset="city" resolution={64} />
       </Suspense>
     </Canvas>
   );
