@@ -1,5 +1,5 @@
 import { motion, useScroll, useTransform, useSpring, type MotionValue } from "framer-motion";
-import { useRef, useState } from "react";
+import { useRef, useState, lazy, Suspense } from "react";
 import { ThemeToggle } from "./ThemeToggle";
 import {
   Activity,
@@ -18,6 +18,10 @@ import {
   Phone,
 } from "lucide-react";
 
+const MindScene = lazy(() =>
+  import("../three/MindScene").then((m) => ({ default: m.MindScene })),
+);
+
 /* ----------------------------- Section 1 ------------------------------ */
 export function SectionQuestion() {
   const ref = useRef<HTMLDivElement>(null);
@@ -26,18 +30,34 @@ export function SectionQuestion() {
   const scale = useTransform(scrollYProgress, [0, 1], [1, 1.35]);
   const opacity = useTransform(scrollYProgress, [0, 0.5, 0.9], [1, 1, 0]);
   const lineW = useTransform(scrollYProgress, [0, 0.5], ["30%", "100%"]);
+  const sceneOpacity = useTransform(scrollYProgress, [0, 0.4, 0.85], [1, 1, 0]);
 
   return (
     <section ref={ref} className="relative h-[200vh]">
-      <div className="sticky top-0 flex h-screen items-center justify-center overflow-hidden">
-        <motion.div
-          style={{ scale, opacity, z, transformPerspective: 1200 }}
-          className="px-6 text-center"
-        >
-          <p className="font-display text-[clamp(2.5rem,8vw,8rem)] leading-[0.95] text-aurora">
-            Every diagnosis<br />begins with a question.
-          </p>
-        </motion.div>
+      <div className="sticky top-0 h-screen overflow-hidden">
+        {/* Two-column layout: text left, 3D right — mirrors DC1 hero grid */}
+        <div className="relative h-full flex items-center px-6 lg:px-12 max-w-7xl mx-auto gap-6">
+          {/* Left: headline text with scroll-parallax */}
+          <motion.div
+            style={{ scale, opacity, z, transformPerspective: 1200 }}
+            className="flex-1 lg:flex-none lg:w-[52%]"
+          >
+            <p className="font-display text-[clamp(2rem,5.5vw,7rem)] leading-[0.95] text-aurora">
+              Every diagnosis<br />begins with a question.
+            </p>
+          </motion.div>
+
+          {/* Right: 3D crystal mind — hidden on small screens */}
+          <motion.div
+            style={{ opacity: sceneOpacity }}
+            className="hidden lg:block flex-1 h-full"
+          >
+            <Suspense fallback={null}>
+              <MindScene />
+            </Suspense>
+          </motion.div>
+        </div>
+
         <div className="absolute bottom-[18%] left-1/2 -translate-x-1/2 w-[min(80vw,720px)]">
           <motion.div style={{ width: lineW }} className="relative h-px overflow-visible">
             <Heartbeat />
