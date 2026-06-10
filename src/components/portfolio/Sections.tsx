@@ -22,6 +22,10 @@ const MindScene = lazy(() =>
   import("../three/MindScene").then((m) => ({ default: m.MindScene })),
 );
 
+const AnalysisScene = lazy(() =>
+  import("../three/AnalysisScene").then((m) => ({ default: m.AnalysisScene })),
+);
+
 /* ----------------------------- Section 1 ------------------------------ */
 export function SectionQuestion() {
   const ref = useRef<HTMLDivElement>(null);
@@ -246,11 +250,24 @@ export function SectionAnalysis() {
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
   const line1 = useTransform(scrollYProgress, [0.3, 0.45], [0, 1]);
   const line2 = useTransform(scrollYProgress, [0.55, 0.7], [0, 1]);
+  const canvasOpacity = useTransform(scrollYProgress, [0.1, 0.28, 0.78, 1], [0, 1, 1, 0.3]);
+
   return (
     <section ref={ref} className="relative h-[240vh]">
-      <div className="sticky top-0 flex h-screen flex-col items-center justify-center overflow-hidden">
-        <NeuralNetwork progress={scrollYProgress} />
-        <div className="relative z-10 text-center px-6 max-w-4xl">
+      <div className="sticky top-0 h-screen overflow-hidden flex flex-col items-center justify-center">
+        {/* 3D diamond — sits behind all text via z-0 */}
+        <motion.div
+          style={{ opacity: canvasOpacity }}
+          className="absolute inset-0 z-0 pointer-events-none"
+        >
+          <Suspense fallback={null}>
+            <AnalysisScene />
+          </Suspense>
+        </motion.div>
+
+        {/* Text panel — z-10 ensures it is always in front of the canvas.
+            The frosted backdrop makes both lines readable over bright 3D edges. */}
+        <div className="relative z-10 text-center px-10 py-8 max-w-3xl rounded-3xl bg-background/45 backdrop-blur-md">
           <p className="text-xs uppercase tracking-[0.4em] text-muted-foreground mb-6">03 — Analysis</p>
           <motion.h2
             style={{ opacity: line1, y: useTransform(line1, [0, 1], [30, 0]) }}
@@ -267,56 +284,6 @@ export function SectionAnalysis() {
         </div>
       </div>
     </section>
-  );
-}
-
-function NeuralNetwork({ progress }: { progress: MotionValue<number> }) {
-  const nodes = Array.from({ length: 28 }).map((_, i) => ({
-    id: i,
-    x: 5 + Math.random() * 90,
-    y: 5 + Math.random() * 90,
-  }));
-  const edges: Array<[number, number]> = [];
-  for (let i = 0; i < nodes.length; i++) {
-    for (let j = i + 1; j < nodes.length; j++) {
-      const dx = nodes[i].x - nodes[j].x;
-      const dy = nodes[i].y - nodes[j].y;
-      if (Math.sqrt(dx * dx + dy * dy) < 22) edges.push([i, j]);
-    }
-  }
-  const reveal = useTransform(progress, [0.15, 0.7], [0, 1]);
-  return (
-    <motion.svg
-      viewBox="0 0 100 100"
-      preserveAspectRatio="none"
-      className="absolute inset-0 h-full w-full"
-      style={{ opacity: useTransform(progress, [0.1, 0.3, 0.8, 1], [0, 1, 1, 0.4]) }}
-    >
-      {edges.map(([a, b], i) => (
-        <motion.line
-          key={i}
-          x1={nodes[a].x}
-          y1={nodes[a].y}
-          x2={nodes[b].x}
-          y2={nodes[b].y}
-          stroke="#7fd4ff"
-          strokeWidth="0.08"
-          strokeOpacity="0.5"
-          style={{ pathLength: reveal }}
-        />
-      ))}
-      {nodes.map((n) => (
-        <motion.circle
-          key={n.id}
-          cx={n.x}
-          cy={n.y}
-          r="0.5"
-          fill="#cdeaff"
-          animate={{ opacity: [0.4, 1, 0.4], scale: [1, 1.6, 1] }}
-          transition={{ duration: 2 + Math.random() * 2, repeat: Infinity, delay: Math.random() * 2 }}
-        />
-      ))}
-    </motion.svg>
   );
 }
 
