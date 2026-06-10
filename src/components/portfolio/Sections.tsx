@@ -131,16 +131,32 @@ const PATIENT_WORDS = [
 export function SectionPatient() {
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
-  const silhouette = useTransform(scrollYProgress, [0.2, 0.6], [0, 1]);
+
+  // Opacity: fade in then hold
+  const opacity = useTransform(scrollYProgress, [0.12, 0.35], [0, 1]);
+  // Zoom: starts small, grows continuously as you scroll — creates immersive pull-in
+  const scale  = useTransform(scrollYProgress, [0.08, 0.50, 0.88], [0.55, 1.0, 1.55]);
+  // Y-axis tilt: starts rotated right, swings left — the depth cue that reads as 3D
+  const rotateY = useTransform(scrollYProgress, [0.10, 0.80], [20, -20]);
 
   return (
     <section ref={ref} className="relative h-[220vh]">
       <div className="sticky top-0 flex h-screen items-center justify-center overflow-hidden">
         <div className="absolute inset-0 flex items-center justify-center">
           <motion.div
-            style={{ opacity: silhouette, scale: useTransform(silhouette, [0, 1], [0.8, 1]) }}
+            style={{
+              opacity,
+              scale,
+              rotateY,
+              transformPerspective: 1100,
+            }}
             className="relative h-[70vh] w-[35vh] max-w-[280px]"
           >
+            {/* Depth glow — blurred duplicate sits "behind" in 3D space */}
+            <div className="absolute inset-0 scale-110 blur-2xl opacity-30 pointer-events-none">
+              <ParticleSilhouette />
+            </div>
+            {/* Primary silhouette */}
             <ParticleSilhouette />
           </motion.div>
         </div>
