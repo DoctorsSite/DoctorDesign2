@@ -1,5 +1,6 @@
 import { motion, useScroll, useTransform, useSpring, type MotionValue } from "framer-motion";
 import { useRef, useState, lazy, Suspense } from "react";
+import doctorPortrait from "@/assets/doctor-portrait.jpg";
 import { ThemeToggle } from "./ThemeToggle";
 import {
   Activity,
@@ -322,23 +323,16 @@ export function SectionReveal() {
 
 function PortraitPlaceholder() {
   return (
-    <div className="relative h-[60vh] w-[44vh] max-w-[420px] overflow-hidden rounded-[2rem]">
-      <div className="absolute inset-0 bg-[linear-gradient(160deg,oklch(0.25_0.06_220),oklch(0.1_0.02_250))]" />
-      <svg viewBox="0 0 200 280" className="absolute inset-0 h-full w-full opacity-80">
-        <defs>
-          <radialGradient id="pp" cx="0.5" cy="0.3" r="0.7">
-            <stop offset="0" stopColor="#a8e6ff" stopOpacity="0.6" />
-            <stop offset="1" stopColor="#0a1220" stopOpacity="0" />
-          </radialGradient>
-        </defs>
-        <rect width="200" height="280" fill="url(#pp)" />
-        <circle cx="100" cy="100" r="44" fill="oklch(0.35 0.04 240)" />
-        <path d="M40 280 Q100 180 160 280 Z" fill="oklch(0.3 0.04 240)" />
-      </svg>
-      <div className="absolute inset-0 ring-1 ring-foreground/10 rounded-[2rem]" />
-      <div className="absolute inset-x-0 bottom-0 p-6 text-xs uppercase tracking-[0.3em] text-foreground/60">
-        Portrait placeholder
-      </div>
+    <div className="relative h-[60vh] w-[44vh] max-w-[420px] overflow-hidden rounded-[2rem] ring-1 ring-foreground/10">
+      <img
+        src={doctorPortrait}
+        alt="Dr. Arjun Rao, Internal Medicine Specialist"
+        className="h-full w-full object-cover object-top"
+        width={896}
+        height={1152}
+      />
+      {/* Gradient overlay — fades bottom so the name text below reads clearly */}
+      <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-background/90 via-background/30 to-transparent" />
     </div>
   );
 }
