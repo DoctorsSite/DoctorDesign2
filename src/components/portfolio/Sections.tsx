@@ -1,5 +1,5 @@
 import { motion, useScroll, useTransform, useSpring, type MotionValue } from "framer-motion";
-import { useRef, useState, lazy, Suspense } from "react";
+import { useRef, useState, useEffect, lazy, Suspense } from "react";
 import doctorPortrait from "@/assets/doctor-portrait.jpg";
 import { ThemeToggle } from "./ThemeToggle";
 import {
@@ -47,7 +47,7 @@ export function SectionQuestion() {
             style={{ scale, opacity, z, transformPerspective: 1200 }}
             className="flex-1 lg:flex-none lg:w-[52%]"
           >
-            <p className="font-display text-[clamp(2rem,5.5vw,7rem)] leading-[0.95] text-aurora">
+            <p className="font-display text-[clamp(1.8rem,5.5vw,7rem)] leading-[0.95] text-aurora">
               Every diagnosis<br />begins with a question.
             </p>
           </motion.div>
@@ -139,6 +139,15 @@ export function SectionPatient() {
   // Y-axis tilt: starts rotated right, swings left — the depth cue that reads as 3D
   const rotateY = useTransform(scrollYProgress, [0.10, 0.80], [20, -20]);
 
+  // Scale floating word radii to viewport so they don't spill off-screen on mobile
+  const [radiusScale, setRadiusScale] = useState(1);
+  useEffect(() => {
+    const update = () => setRadiusScale(Math.min(1, window.innerWidth / 720));
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
   return (
     <section ref={ref} className="relative h-[220vh]">
       <div className="sticky top-0 flex h-screen items-center justify-center overflow-hidden">
@@ -161,11 +170,11 @@ export function SectionPatient() {
           </motion.div>
         </div>
         {PATIENT_WORDS.map((w, i) => (
-          <FloatingWord key={w.text} word={w.text} depth={w.depth} index={i} progress={scrollYProgress} />
+          <FloatingWord key={w.text} word={w.text} depth={w.depth} index={i} progress={scrollYProgress} radiusScale={radiusScale} />
         ))}
-        <div className="absolute top-12 left-1/2 -translate-x-1/2 text-center">
+        <div className="absolute top-10 left-1/2 -translate-x-1/2 text-center w-full px-6">
           <p className="text-xs uppercase tracking-[0.4em] text-muted-foreground">02 — Observation</p>
-          <h2 className="mt-4 font-display text-3xl md:text-5xl text-gradient">Understanding the patient</h2>
+          <h2 className="mt-3 font-display text-2xl md:text-5xl text-gradient">Understanding the patient</h2>
         </div>
       </div>
     </section>
@@ -177,14 +186,16 @@ function FloatingWord({
   depth,
   index,
   progress,
+  radiusScale,
 }: {
   word: string;
   depth: number;
   index: number;
   progress: MotionValue<number>;
+  radiusScale: number;
 }) {
   const angle = (index / PATIENT_WORDS.length) * Math.PI * 2;
-  const radius = 280 + depth * 180;
+  const radius = (280 + depth * 180) * radiusScale;
   const x = Math.cos(angle) * radius;
   const y = Math.sin(angle) * radius * 0.55;
   const z = useTransform(progress, [0, 1], [-400 + depth * 800, 400 - depth * 600]);
@@ -283,17 +294,17 @@ export function SectionAnalysis() {
         </motion.div>
 
         {/* Text sits in the left half — no overlap with the diamond which lives on the right */}
-        <div className="relative z-10 h-full flex flex-col justify-center px-8 md:px-16 max-w-[48%] min-w-[320px]">
-          <p className="text-xs uppercase tracking-[0.4em] text-muted-foreground mb-8">03 — Analysis</p>
+        <div className="relative z-10 h-full flex flex-col justify-center px-6 md:px-16 w-full md:max-w-[48%] md:min-w-[320px]">
+          <p className="text-xs uppercase tracking-[0.4em] text-muted-foreground mb-6 md:mb-8">03 — Analysis</p>
           <motion.h2
             style={{ opacity: line1, y: useTransform(line1, [0, 1], [32, 0]) }}
-            className="font-display text-[clamp(2rem,4vw,4rem)] leading-[1.05] text-gradient"
+            className="font-display text-[clamp(1.6rem,4vw,4rem)] leading-[1.05] text-gradient"
           >
             Medicine is not guessing.
           </motion.h2>
           <motion.h2
             style={{ opacity: line2, y: useTransform(line2, [0, 1], [32, 0]) }}
-            className="mt-5 font-display text-[clamp(2rem,4vw,4rem)] leading-[1.05] text-aurora italic"
+            className="mt-4 md:mt-5 font-display text-[clamp(1.6rem,4vw,4rem)] leading-[1.05] text-aurora italic"
           >
             It is understanding patterns.
           </motion.h2>
@@ -322,13 +333,13 @@ export function SectionReveal() {
         </motion.div>
         <motion.div
           style={{ y: nameY, opacity: nameO }}
-          className="absolute bottom-[10%] left-1/2 -translate-x-1/2 text-center w-full px-6"
+          className="absolute bottom-[6%] md:bottom-[10%] left-1/2 -translate-x-1/2 text-center w-full px-6"
         >
-          <p className="text-xs uppercase tracking-[0.5em] text-primary mb-4">The Doctor</p>
-          <h2 className="font-display text-[clamp(3rem,8vw,7rem)] leading-none text-gradient">
+          <p className="text-xs uppercase tracking-[0.4em] md:tracking-[0.5em] text-primary mb-3 md:mb-4">The Doctor</p>
+          <h2 className="font-display text-[clamp(2.2rem,8vw,7rem)] leading-none text-gradient">
             Dr. Arjun Rao
           </h2>
-          <p className="mt-4 text-base md:text-lg text-muted-foreground">
+          <p className="mt-3 md:mt-4 text-sm md:text-lg text-muted-foreground">
             Internal Medicine Specialist · 15+ Years Experience
           </p>
         </motion.div>
@@ -339,7 +350,7 @@ export function SectionReveal() {
 
 function PortraitPlaceholder() {
   return (
-    <div className="relative h-[60vh] w-[44vh] max-w-[420px] overflow-hidden rounded-[2rem] ring-1 ring-foreground/10">
+    <div className="relative h-[55vh] w-[38vh] max-w-[340px] sm:h-[60vh] sm:w-[44vh] sm:max-w-[420px] overflow-hidden rounded-[1.5rem] sm:rounded-[2rem] ring-1 ring-foreground/10">
       <img
         src={doctorPortrait}
         alt="Dr. Arjun Rao, Internal Medicine Specialist"
@@ -368,13 +379,45 @@ export function SectionJourney() {
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start 60%", "end 40%"] });
   const lineH = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
   return (
-    <section ref={ref} className="relative py-32 px-6">
+    <section ref={ref} className="relative py-20 md:py-32 px-6">
       <div className="mx-auto max-w-6xl">
-        <div className="mb-20 text-center">
+        <div className="mb-12 md:mb-20 text-center">
           <p className="text-xs uppercase tracking-[0.4em] text-muted-foreground">05 — The Journey</p>
           <h2 className="mt-4 font-display text-4xl md:text-6xl text-gradient">A path written in patience</h2>
         </div>
-        <div className="relative">
+
+        {/* Mobile: simple left-aligned list */}
+        <div className="md:hidden relative pl-8 border-l border-foreground/10">
+          <motion.div
+            style={{ height: lineH }}
+            className="absolute left-0 top-0 w-px bg-gradient-to-b from-primary via-primary/60 to-transparent"
+          />
+          <div className="space-y-10">
+            {TIMELINE.map(({ year, title, place, icon: Icon }, i) => (
+              <motion.div
+                key={year}
+                initial={{ opacity: 0, x: -30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, margin: "-10%" }}
+                transition={{ duration: 0.7, delay: i * 0.05, ease: [0.16, 1, 0.3, 1] }}
+                className="relative"
+              >
+                <div className="absolute -left-[2.35rem] top-4 h-3 w-3 rounded-full bg-primary shadow-[0_0_20px_oklch(0.82_0.12_200_/0.8)]" />
+                <div className="glass rounded-2xl p-5">
+                  <div className="flex items-center gap-3 text-primary">
+                    <Icon size={16} />
+                    <span className="text-xs uppercase tracking-[0.3em]">{year}</span>
+                  </div>
+                  <h3 className="mt-2 font-display text-xl text-foreground">{title}</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">{place}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+
+        {/* Desktop: alternating two-column */}
+        <div className="hidden md:block relative">
           <div className="absolute left-[50%] top-0 h-full w-px -translate-x-1/2 bg-foreground/5" />
           <motion.div
             style={{ height: lineH }}
@@ -410,7 +453,7 @@ function TimelineCard({
       whileInView={{ opacity: 1, x: 0, rotateY: 0 }}
       viewport={{ once: true, margin: "-20%" }}
       transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-      className={`relative grid grid-cols-2 gap-8 items-center ${side === "right" ? "" : ""}`}
+      className="relative grid grid-cols-2 gap-8 items-center"
       style={{ transformPerspective: 1200 }}
     >
       <div className={side === "left" ? "text-right pr-12" : "col-start-2 pl-12"}>
@@ -443,11 +486,11 @@ const EXPERTISE = [
 export function SectionExpertise() {
   const [active, setActive] = useState<number | null>(null);
   return (
-    <section className="relative py-32 px-6">
+    <section className="relative py-20 md:py-32 px-6">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-20 text-center">
+        <div className="mb-12 md:mb-20 text-center">
           <p className="text-xs uppercase tracking-[0.4em] text-muted-foreground">06 — Expertise</p>
-          <h2 className="mt-4 font-display text-4xl md:text-6xl text-gradient">A universe of care</h2>
+          <h2 className="mt-4 font-display text-3xl md:text-6xl text-gradient">A universe of care</h2>
           <p className="mt-4 text-muted-foreground max-w-xl mx-auto">
             Six orbits of practice. Hover to explore. Each one approached with the same discipline.
           </p>
@@ -520,14 +563,14 @@ export function SectionImpact() {
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
   return (
-    <section ref={ref} className="relative py-32 px-6 overflow-hidden">
+    <section ref={ref} className="relative py-20 md:py-32 px-6 overflow-hidden">
       <ImpactParticles progress={scrollYProgress} />
       <div className="mx-auto max-w-6xl relative">
-        <div className="mb-20 text-center">
+        <div className="mb-12 md:mb-20 text-center">
           <p className="text-xs uppercase tracking-[0.4em] text-muted-foreground">07 — Lives Impacted</p>
-          <h2 className="mt-4 font-display text-4xl md:text-6xl text-gradient">Measured by what cannot<br/>be measured.</h2>
+          <h2 className="mt-4 font-display text-3xl md:text-6xl text-gradient">Measured by what cannot<br/>be measured.</h2>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
           {METRICS.map((m, i) => (
             <motion.div
               key={m.label}
@@ -535,10 +578,10 @@ export function SectionImpact() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8, delay: i * 0.08, ease: [0.16, 1, 0.3, 1] }}
-              className="glass rounded-3xl p-8 text-center"
+              className="glass rounded-2xl md:rounded-3xl p-5 md:p-8 text-center"
             >
-              <div className="font-display text-4xl md:text-5xl text-aurora">{m.value}</div>
-              <div className="mt-3 text-xs uppercase tracking-[0.3em] text-muted-foreground">{m.label}</div>
+              <div className="font-display text-3xl md:text-5xl text-aurora">{m.value}</div>
+              <div className="mt-2 md:mt-3 text-[10px] md:text-xs uppercase tracking-[0.25em] md:tracking-[0.3em] text-muted-foreground">{m.label}</div>
             </motion.div>
           ))}
         </div>
@@ -588,13 +631,13 @@ const STORIES = [
 
 export function SectionStories() {
   return (
-    <section className="relative py-32 px-6">
+    <section className="relative py-20 md:py-32 px-6">
       <div className="mx-auto max-w-6xl">
-        <div className="mb-20 text-center">
+        <div className="mb-12 md:mb-20 text-center">
           <p className="text-xs uppercase tracking-[0.4em] text-muted-foreground">08 — Stories</p>
-          <h2 className="mt-4 font-display text-4xl md:text-6xl text-gradient">Memories from those<br/>he treated.</h2>
+          <h2 className="mt-4 font-display text-3xl md:text-6xl text-gradient">Memories from those<br/>he treated.</h2>
         </div>
-        <div className="grid gap-8 md:grid-cols-3">
+        <div className="grid gap-6 md:gap-8 md:grid-cols-3">
           {STORIES.map((s, i) => (
             <motion.figure
               key={i}
@@ -636,11 +679,11 @@ const ACHIEVEMENTS = [
 
 export function SectionResearch() {
   return (
-    <section className="relative py-32 px-6">
+    <section className="relative py-20 md:py-32 px-6">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-20 text-center">
+        <div className="mb-12 md:mb-20 text-center">
           <p className="text-xs uppercase tracking-[0.4em] text-muted-foreground">09 — Research & Recognition</p>
-          <h2 className="mt-4 font-display text-4xl md:text-6xl text-gradient">The work behind the work.</h2>
+          <h2 className="mt-4 font-display text-3xl md:text-6xl text-gradient">The work behind the work.</h2>
         </div>
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
           {ACHIEVEMENTS.map((a, i) => (
@@ -678,17 +721,17 @@ export function SectionPhilosophy() {
   return (
     <section ref={ref} className="relative h-[160vh]">
       <div className="sticky top-0 flex h-screen items-center justify-center px-6">
-        <div className="text-center max-w-5xl">
-          <p className="text-xs uppercase tracking-[0.4em] text-muted-foreground mb-12">10 — Philosophy</p>
+        <div className="text-center max-w-5xl px-6">
+          <p className="text-xs uppercase tracking-[0.4em] text-muted-foreground mb-8 md:mb-12">10 — Philosophy</p>
           <motion.h2
             style={{ opacity: l1, y: useTransform(l1, [0, 1], [40, 0]) }}
-            className="font-display text-[clamp(2.5rem,8vw,8rem)] leading-[0.95] text-gradient"
+            className="font-display text-[clamp(2rem,8vw,8rem)] leading-[0.95] text-gradient"
           >
             Treating people.
           </motion.h2>
           <motion.h2
             style={{ opacity: l2, y: useTransform(l2, [0, 1], [40, 0]) }}
-            className="mt-6 font-display italic text-[clamp(2.5rem,8vw,8rem)] leading-[0.95] text-aurora"
+            className="mt-4 md:mt-6 font-display italic text-[clamp(2rem,8vw,8rem)] leading-[0.95] text-aurora"
           >
             Not just symptoms.
           </motion.h2>
@@ -701,24 +744,24 @@ export function SectionPhilosophy() {
 /* ----------------------------- Section 11 ----------------------------- */
 export function SectionConsultation() {
   return (
-    <section className="relative py-32 px-6">
+    <section className="relative py-20 md:py-32 px-6">
       <div className="mx-auto max-w-6xl">
-        <div className="mb-16 text-center">
+        <div className="mb-12 md:mb-16 text-center">
           <p className="text-xs uppercase tracking-[0.4em] text-muted-foreground">11 — Consultation</p>
-          <h2 className="mt-4 font-display text-4xl md:text-6xl text-gradient">Begin your conversation.</h2>
-          <p className="mt-4 text-muted-foreground max-w-xl mx-auto">
+          <h2 className="mt-4 font-display text-3xl md:text-6xl text-gradient">Begin your conversation.</h2>
+          <p className="mt-4 text-muted-foreground max-w-xl mx-auto text-sm md:text-base">
             A consultation with Dr. Rao is unhurried, attentive and built around your story.
           </p>
         </div>
         <div className="grid gap-8 md:grid-cols-5">
-          <div className="md:col-span-3 glass rounded-3xl p-8">
+          <div className="md:col-span-3 glass rounded-2xl md:rounded-3xl p-6 md:p-8">
             <form className="grid gap-5" onSubmit={(e) => e.preventDefault()}>
               <Field label="Full name" type="text" placeholder="Your name" />
-              <div className="grid gap-5 md:grid-cols-2">
+              <div className="grid gap-5 sm:grid-cols-2">
                 <Field label="Email" type="email" placeholder="you@example.com" />
                 <Field label="Phone" type="tel" placeholder="+91 ..." />
               </div>
-              <div className="grid gap-5 md:grid-cols-2">
+              <div className="grid gap-5 sm:grid-cols-2">
                 <Field label="Preferred date" type="date" />
                 <Field label="Preferred time" type="time" />
               </div>
@@ -789,17 +832,18 @@ function InfoCard({ icon: Icon, title, lines }: { icon: typeof MapPin; title: st
 /* ----------------------------- Nav & Progress ------------------------- */
 export function TopNav() {
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 px-6 py-5">
+    <header className="fixed top-0 left-0 right-0 z-50 px-5 py-4 md:px-6 md:py-5">
       <div className="mx-auto max-w-7xl flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-full glass grid place-items-center">
-            <span className="font-display text-sm text-primary">AR</span>
+        <div className="flex items-center gap-2.5">
+          <div className="h-7 w-7 md:h-8 md:w-8 rounded-full glass grid place-items-center shrink-0">
+            <span className="font-display text-xs md:text-sm text-primary">AR</span>
           </div>
-          <span className="text-xs uppercase tracking-[0.3em] text-foreground/80 hidden md:inline">
-            Inside the Doctor's Mind
+          <span className="text-[10px] md:text-xs uppercase tracking-[0.25em] md:tracking-[0.3em] text-foreground/80">
+            <span className="hidden sm:inline">Inside the Doctor's Mind</span>
+            <span className="sm:hidden">Dr. Arjun Rao</span>
           </span>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 md:gap-3">
           <ThemeToggle />
           <a
             href="#consult"
@@ -807,7 +851,7 @@ export function TopNav() {
               e.preventDefault();
               document.querySelector("#consult")?.scrollIntoView({ behavior: "smooth" });
             }}
-            className="text-xs uppercase tracking-[0.3em] glass rounded-full px-5 py-2.5 hover:text-primary transition"
+            className="text-[10px] md:text-xs uppercase tracking-[0.25em] md:tracking-[0.3em] glass rounded-full px-4 md:px-5 py-2 md:py-2.5 hover:text-primary transition"
           >
             Consult
           </a>
